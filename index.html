@@ -215,8 +215,16 @@ async function deleteCard(id) {
 }
 
 function render() {
-  // 대기/진행중은 항상 표시, 완료는 해당 월만
-  const monthFiltered = cards.filter(c => c.status !== 'done' || isInViewMonth(c));
+  // 완료: 해당 월만 / 대기·진행중: 생성월 이후에만 표시 (과거 달에는 안 보임)
+  const monthFiltered = cards.filter(c => {
+    if (c.status === 'done') return isInViewMonth(c);
+    // 대기/진행중: 카드 생성월 <= 보고 있는 월일 때만 표시
+    if (!c.created_at) return true;
+    const d = new Date(c.created_at);
+    const cardYM = d.getFullYear() * 12 + d.getMonth();
+    const viewYM = viewYear * 12 + viewMonth;
+    return cardYM <= viewYM;
+  });
   const filtered = filter ? monthFiltered.filter(c => c.person && c.person.split(',').map(s=>s.trim()).includes(filter)) : monthFiltered;
   const people = [...new Set(cards.flatMap(c => c.person ? c.person.split(',').map(s=>s.trim()).filter(Boolean) : []))];
 
