@@ -325,9 +325,6 @@ function render() {
 
     const del = form.querySelector('.btn-delete');
     if (del) del.onclick = () => deleteCard(id);
-
-    const sel = form.querySelector('select');
-    if (sel) sel.onchange = () => { updateCard(id, { status: sel.value }); };
   });
 }
 
@@ -378,7 +375,6 @@ function formHTML(title, desc, person, deadline, status, isNew, id, reference) {
     </div>
     <textarea name="reference" placeholder="참고 (링크, 메모 등)">${esc(reference || '')}</textarea>
     <div class="form-row">
-      ${!isNew ? `<select name="status"><option value="in_progress" ${status==='in_progress'?'selected':''}>진행중</option><option value="done" ${status==='done'?'selected':''}>완료</option><option value="backlog" ${status==='backlog'?'selected':''}>대기</option></select>` : ''}
       <button class="btn btn-primary">${isNew ? '추가' : '저장'}</button>
       <button class="btn btn-cancel">취소</button>
       ${!isNew ? '<button class="btn btn-delete">삭제</button>' : ''}
