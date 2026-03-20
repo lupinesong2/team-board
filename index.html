@@ -106,6 +106,14 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 12px; display: flex; alig
 .btn-delete:hover { background: #fff0f0; }
 select { padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; }
 
+/* Month Nav */
+.month-nav {
+  background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+  font-size: 14px; color: var(--muted); cursor: pointer; padding: 2px 10px;
+  transition: all 0.15s;
+}
+.month-nav:hover { border-color: var(--accent); color: var(--accent); }
+
 /* Loading */
 .loading { text-align: center; padding: 80px; color: #888; font-size: 14px; }
 </style>
@@ -113,11 +121,16 @@ select { padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border); 
 <body>
 <div class="wrap">
   <div class="ep">Team Board</div>
-  <h1>2025년 3월 <span class="team-badge">UX팀</span></h1>
+  <h1>
+    <button class="month-nav" id="prevMonth">◀</button>
+    <span id="monthLabel">2025년 3월</span>
+    <button class="month-nav" id="nextMonth">▶</button>
+    <span class="team-badge">UX팀</span>
+  </h1>
   <div class="meta">
     <span id="cardCount">0건</span>
     <span>월 단위</span>
-    <span>2025 Q1</span>
+    <span id="quarterLabel">2025 Q1</span>
   </div>
 
   <!-- Filter -->
@@ -156,9 +169,29 @@ let filter = null;
 let editingId = null;
 let addingTo = null;
 
+const now = new Date();
+let viewYear = now.getFullYear();
+let viewMonth = now.getMonth(); // 0-indexed
+
+function updateMonthUI() {
+  document.getElementById('monthLabel').textContent = `${viewYear}년 ${viewMonth + 1}월`;
+  const q = Math.floor(viewMonth / 3) + 1;
+  document.getElementById('quarterLabel').textContent = `${viewYear} Q${q}`;
+}
+
+document.getElementById('prevMonth').onclick = () => { viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } updateMonthUI(); render(); };
+document.getElementById('nextMonth').onclick = () => { viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } updateMonthUI(); render(); };
+
+function isInViewMonth(card) {
+  if (!card.created_at) return true;
+  const d = new Date(card.created_at);
+  return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
+}
+
 async function fetchCards() {
   const { data } = await supabase.from('cards').select('*').order('sort_order').order('created_at', { ascending: false });
   cards = data || [];
+  updateMonthUI();
   render();
 }
 
@@ -182,10 +215,12 @@ async function deleteCard(id) {
 }
 
 function render() {
-  const filtered = filter ? cards.filter(c => c.person && c.person.split(',').map(s=>s.trim()).includes(filter)) : cards;
+  // 대기/진행중은 항상 표시, 완료는 해당 월만
+  const monthFiltered = cards.filter(c => c.status !== 'done' || isInViewMonth(c));
+  const filtered = filter ? monthFiltered.filter(c => c.person && c.person.split(',').map(s=>s.trim()).includes(filter)) : monthFiltered;
   const people = [...new Set(cards.flatMap(c => c.person ? c.person.split(',').map(s=>s.trim()).filter(Boolean) : []))];
 
-  document.getElementById('cardCount').textContent = cards.length + '건';
+  document.getElementById('cardCount').textContent = monthFiltered.length + '건';
 
   // Filter chips
   const fr = document.getElementById('filterRow');
