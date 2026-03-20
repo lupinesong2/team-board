@@ -17,12 +17,15 @@
   --red: #e03131;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height: auto;
+  overflow: visible;
+}
 body {
   font-family: 'Noto Sans KR', -apple-system, sans-serif;
   background: transparent;
   color: var(--text);
   line-height: 1.6;
-  min-height: 100vh;
 }
 .wrap { max-width: 860px; margin: 0 auto; padding: 32px 24px 60px; }
 
@@ -454,6 +457,18 @@ function extractLinkName(url) {
     return u.hostname;
   } catch { return url.length > 40 ? url.substring(0, 37) + '...' : url; }
 }
+
+// iframe 높이 자동 조절 - 부모에 콘텐츠 높이 전달
+function notifyHeight() {
+  const h = document.documentElement.scrollHeight;
+  window.parent.postMessage({ type: 'resize', height: h }, '*');
+  // Confluence iframe 직접 리사이즈 시도
+  if (window.frameElement) {
+    window.frameElement.style.height = h + 'px';
+  }
+}
+const ro = new ResizeObserver(() => notifyHeight());
+ro.observe(document.body);
 
 fetchCards();
 </script>
