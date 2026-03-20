@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #2d5be3;
+  --bg: transparent;
+  --card: #ffffff;
+  --border: #e0ddd8;
+  --text: #1a1a1a;
+  --muted: #6b6b6b;
+  --green: #2f9e44;
+  --red: #e03131;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Noto Sans KR', -apple-system, sans-serif;
+  background: transparent;
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+.wrap { max-width: 860px; margin: 0 auto; padding: 32px 24px 60px; }
+
+/* Header */
+.ep { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); font-weight: 500; letter-spacing: 0.5px; margin-bottom: 8px; }
+h1 { font-size: 26px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+.team-badge { font-size: 13px; font-weight: 600; padding: 3px 12px; border-radius: 12px; background: #edf2ff; color: var(--accent); }
+.meta { display: flex; gap: 10px; font-size: 12px; color: var(--muted); margin-bottom: 24px; flex-wrap: wrap; }
+.meta span { font-family: 'JetBrains Mono', monospace; background: var(--card); border: 1px solid var(--border); padding: 3px 10px; border-radius: 4px; }
+
+/* Filter */
+.filter-row { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-chip {
+  padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--card); font-size: 12px; font-weight: 600; color: #666;
+  cursor: pointer; transition: all 0.15s;
+}
+.filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+.filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Kanban */
+.kanban { display: flex; flex-direction: column; gap: 16px; }
+.lane { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.lane-header {
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+  border-bottom: 1px solid var(--border); background: #f5f4f1;
+}
+.lane-dot { width: 8px; height: 8px; border-radius: 50%; }
+.lane-title { font-size: 13px; font-weight: 700; flex: 1; }
+.lane-count { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #888; background: #eee; padding: 1px 8px; border-radius: 10px; }
+.add-btn {
+  width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--border);
+  background: var(--card); font-size: 16px; color: #888; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.add-btn:hover { border-color: var(--accent); color: var(--accent); }
+.lane-body { padding: 8px; min-height: 40px; transition: background 0.15s; }
+.lane-body.drag-over { background: #edf2ff; }
+
+/* Card */
+.card {
+  border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px;
+  margin-bottom: 6px; background: #fafaf8; cursor: grab; transition: box-shadow 0.15s, opacity 0.15s;
+}
+.card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.card.dragging { opacity: 0.4; cursor: grabbing; }
+.card:last-child { margin-bottom: 0; }
+.card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.card-title { font-size: 14px; font-weight: 600; flex: 1; }
+.person-badge { font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 12px; white-space: nowrap; }
+.card-desc { font-size: 13px; color: var(--muted); white-space: pre-line; }
+.card-ref { font-size: 12px; color: #888; margin-top: 4px; padding: 4px 8px; background: #f5f4f1; border-radius: 4px; white-space: pre-line; word-break: break-all; }
+.card-ref::before { content: '📎 '; }
+.card-ref a { color: var(--accent); text-decoration: none; word-break: break-all; }
+.card-ref a:hover { text-decoration: underline; }
+.card-ref .figma-link::before { content: '🎨 '; }
+.card-desc a { color: var(--accent); text-decoration: none; }
+.card-desc a:hover { text-decoration: underline; }
+.card-meta { display: flex; gap: 12px; font-size: 11px; color: #999; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+.card-persons { display: flex; gap: 4px; flex-wrap: wrap; }
+.empty { text-align: center; padding: 16px; font-size: 13px; color: #ccc; }
+
+/* Form */
+.card-form {
+  border: 1px solid var(--accent); border-radius: 6px; padding: 14px;
+  margin-bottom: 6px; background: #fff; display: flex; flex-direction: column; gap: 8px;
+}
+.card-form input, .card-form select, .card-form textarea {
+  padding: 8px 10px; border-radius: 4px; border: 1px solid var(--border);
+  font-size: 13px; font-family: inherit; outline: none;
+}
+.card-form input:focus, .card-form textarea:focus { border-color: var(--accent); }
+.card-form textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+.form-row { display: flex; gap: 6px; }
+.form-row input { flex: 1; }
+.btn { padding: 6px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #2449b8; }
+.btn-cancel { background: var(--card); color: #666; border: 1px solid var(--border); }
+.btn-delete { background: var(--card); color: var(--red); border: 1px solid var(--red); margin-left: auto; }
+.btn-delete:hover { background: #fff0f0; }
+select { padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; }
+
+/* Loading */
+.loading { text-align: center; padding: 80px; color: #888; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="ep">Team Board</div>
+  <h1>2025년 3월 <span class="team-badge">UX팀</span></h1>
+  <div class="meta">
+    <span id="cardCount">0건</span>
+    <span>월 단위</span>
+    <span>2025 Q1</span>
+  </div>
+
+  <!-- Filter -->
+  <div class="filter-row" id="filterRow"></div>
+
+  <!-- Kanban -->
+  <div class="kanban" id="kanban">
+    <div class="loading">Loading...</div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const supabase = createClient(
+  'https://wfqtukavhmpuymyorznq.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmcXR1a2F2aG1wdXlteW9yem5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5ODIyNTAsImV4cCI6MjA4OTU1ODI1MH0.mR3GrVfmBmxU8rLZ8hCxlEfJYivN-mk9TCAJvzrTdLU'
+);
+
+const LANES = [
+  { status: 'in_progress', label: '진행중', dot: '#2d5be3' },
+  { status: 'done', label: '완료', dot: '#2f9e44' },
+  { status: 'backlog', label: '대기', dot: '#aaa' },
+];
+const PALETTE = ['#2d5be3','#2f9e44','#d35400','#8b5cf6','#e03131','#0891b2','#b8860b','#6d28d9'];
+const personColors = {};
+let colorIdx = 0;
+function pc(name) {
+  if (!name) return '#888';
+  if (!personColors[name]) { personColors[name] = PALETTE[colorIdx++ % PALETTE.length]; }
+  return personColors[name];
+}
+
+let cards = [];
+let filter = null;
+let editingId = null;
+let addingTo = null;
+
+async function fetchCards() {
+  const { data } = await supabase.from('cards').select('*').order('sort_order').order('created_at', { ascending: false });
+  cards = data || [];
+  render();
+}
+
+async function addCard(status, title, desc, person, deadline, reference) {
+  if (!title.trim()) return;
+  await supabase.from('cards').insert({ title, description: desc, person, status, deadline, reference, sort_order: cards.filter(c => c.status === status).length });
+  addingTo = null;
+  await fetchCards();
+}
+
+async function updateCard(id, updates) {
+  await supabase.from('cards').update(updates).eq('id', id);
+  editingId = null;
+  await fetchCards();
+}
+
+async function deleteCard(id) {
+  await supabase.from('cards').delete().eq('id', id);
+  editingId = null;
+  await fetchCards();
+}
+
+function render() {
+  const filtered = filter ? cards.filter(c => c.person && c.person.split(',').map(s=>s.trim()).includes(filter)) : cards;
+  const people = [...new Set(cards.flatMap(c => c.person ? c.person.split(',').map(s=>s.trim()).filter(Boolean) : []))];
+
+  document.getElementById('cardCount').textContent = cards.length + '건';
+
+  // Filter chips
+  const fr = document.getElementById('filterRow');
+  fr.innerHTML = `<button class="filter-chip ${!filter ? 'active' : ''}" data-filter="">전체</button>` +
+    people.map(p => `<button class="filter-chip ${filter === p ? 'active' : ''}" data-filter="${p}" ${filter === p ? `style="background:${pc(p)};border-color:${pc(p)};color:#fff"` : ''}>${p}</button>`).join('');
+
+  fr.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.onclick = () => { filter = btn.dataset.filter || null; render(); };
+  });
+
+  // Kanban
+  const kb = document.getElementById('kanban');
+  kb.innerHTML = LANES.map(lane => {
+    const lc = filtered.filter(c => c.status === lane.status);
+    return `<div class="lane">
+      <div class="lane-header">
+        <div class="lane-dot" style="background:${lane.dot}"></div>
+        <span class="lane-title">${lane.label}</span>
+        <span class="lane-count">${lc.length}</span>
+        <button class="add-btn" data-add="${lane.status}">+</button>
+      </div>
+      <div class="lane-body" data-lane="${lane.status}">
+        ${addingTo === lane.status ? formHTML('', '', '', '', lane.status, true, null, '') : ''}
+        ${lc.map(c => editingId === c.id ? formHTML(c.title, c.description || '', c.person || '', c.deadline || '', c.status, false, c.id, c.reference || '') : cardHTML(c)).join('')}
+        ${lc.length === 0 && addingTo !== lane.status ? '<div class="empty">카드 없음</div>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Add button events
+  kb.querySelectorAll('.add-btn').forEach(btn => {
+    btn.onclick = () => { addingTo = addingTo === btn.dataset.add ? null : btn.dataset.add; editingId = null; render(); };
+  });
+
+  // Drag & Drop
+  let dragId = null;
+
+  kb.querySelectorAll('.card[data-id]').forEach(el => {
+    el.addEventListener('dragstart', (e) => {
+      dragId = el.dataset.id;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      dragId = null;
+      kb.querySelectorAll('.lane-body').forEach(lb => lb.classList.remove('drag-over'));
+    });
+  });
+
+  kb.querySelectorAll('.lane-body').forEach(lb => {
+    lb.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; lb.classList.add('drag-over'); });
+    lb.addEventListener('dragleave', () => { lb.classList.remove('drag-over'); });
+    lb.addEventListener('drop', (e) => {
+      e.preventDefault();
+      lb.classList.remove('drag-over');
+      if (dragId && lb.dataset.lane) {
+        updateCard(dragId, { status: lb.dataset.lane });
+        dragId = null;
+      }
+    });
+  });
+
+  // Card click events (only if not dragging)
+  kb.querySelectorAll('.card[data-id]').forEach(el => {
+    el.onclick = (e) => { if (dragId || e.target.closest('a')) return; editingId = el.dataset.id; addingTo = null; render(); };
+  });
+
+  // Form events
+  kb.querySelectorAll('.card-form').forEach(form => {
+    const isNew = form.dataset.new === 'true';
+    const id = form.dataset.id;
+    const status = form.dataset.status;
+
+    form.querySelector('.btn-primary').onclick = () => {
+      const t = form.querySelector('[name=title]').value;
+      const d = form.querySelector('[name=desc]').value;
+      const p = form.querySelector('[name=person]').value;
+      const dl = form.querySelector('[name=deadline]').value;
+      const ref = form.querySelector('[name=reference]').value;
+      if (isNew) addCard(status, t, d, p, dl, ref);
+      else updateCard(id, { title: t, description: d, person: p, deadline: dl, reference: ref });
+    };
+
+    form.querySelector('.btn-cancel').onclick = () => {
+      if (isNew) addingTo = null; else editingId = null;
+      render();
+    };
+
+    const del = form.querySelector('.btn-delete');
+    if (del) del.onclick = () => deleteCard(id);
+
+    const sel = form.querySelector('select');
+    if (sel) sel.onchange = () => { updateCard(id, { status: sel.value }); };
+  });
+}
+
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+function deadlineWithDay(dl) {
+  if (!dl) return '';
+  const match = dl.match(/^(\d{1,2})\.(\d{1,2})$/);
+  if (!match) return esc(dl);
+  const month = parseInt(match[1], 10) - 1;
+  const day = parseInt(match[2], 10);
+  const year = new Date().getFullYear();
+  const d = new Date(year, month, day);
+  if (isNaN(d.getTime())) return esc(dl);
+  return `${esc(dl)}(${DAY_NAMES[d.getDay()]})`;
+}
+
+function personBadges(person) {
+  if (!person) return '';
+  const names = person.split(',').map(s => s.trim()).filter(Boolean);
+  return `<span class="card-persons">${names.map(n => {
+    const col = pc(n);
+    return `<span class="person-badge" style="background:${col}15;color:${col}">${esc(n)}</span>`;
+  }).join('')}</span>`;
+}
+
+function cardHTML(c) {
+  return `<div class="card" data-id="${c.id}" draggable="true">
+    <div class="card-top">
+      <span class="card-title">${esc(c.title)}</span>
+      ${personBadges(c.person)}
+    </div>
+    ${c.description ? `<div class="card-desc">${linkify(c.description)}</div>` : ''}
+    ${c.reference ? `<div class="card-ref">${linkify(c.reference)}</div>` : ''}
+    <div class="card-meta">
+      ${c.started ? `<span>시작 ${esc(c.started)}</span>` : ''}
+      ${c.deadline ? `<span>마감 ${deadlineWithDay(c.deadline)}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function formHTML(title, desc, person, deadline, status, isNew, id, reference) {
+  return `<div class="card-form" data-new="${isNew}" data-id="${id || ''}" data-status="${status}">
+    <input name="title" placeholder="아젠다 제목" value="${esc(title)}">
+    <textarea name="desc" placeholder="설명 (선택, 줄바꿈 가능)">${esc(desc)}</textarea>
+    <div class="form-row">
+      <input name="person" placeholder="담당자 (쉼표로 복수 입력)" value="${esc(person)}">
+      <input name="deadline" placeholder="마감 MM.DD" value="${esc(deadline)}">
+    </div>
+    <textarea name="reference" placeholder="📎 참고 (링크, 메모 등)">${esc(reference || '')}</textarea>
+    <div class="form-row">
+      ${!isNew ? `<select name="status"><option value="in_progress" ${status==='in_progress'?'selected':''}>진행중</option><option value="done" ${status==='done'?'selected':''}>완료</option><option value="backlog" ${status==='backlog'?'selected':''}>대기</option></select>` : ''}
+      <button class="btn btn-primary">${isNew ? '추가' : '저장'}</button>
+      <button class="btn btn-cancel">취소</button>
+      ${!isNew ? '<button class="btn btn-delete">삭제</button>' : ''}
+    </div>
+  </div>`;
+}
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function linkify(text) {
+  const escaped = esc(text);
+  return escaped.replace(/(https?:\/\/[^\s<&]+)/g, (url) => {
+    const isFigma = url.includes('figma.com');
+    const label = isFigma ? 'Figma' : (url.length > 50 ? url.substring(0, 47) + '...' : url);
+    const cls = isFigma ? 'class="figma-link"' : '';
+    return `<a href="${url}" target="_blank" rel="noopener" ${cls}>${label}</a>`;
+  });
+}
+
+fetchCards();
+</script>
+</body>
+</html>
