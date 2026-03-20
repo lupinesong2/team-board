@@ -268,8 +268,9 @@ function render() {
     btn.onclick = () => { addingTo = addingTo === btn.dataset.add ? null : btn.dataset.add; editingId = null; render(); };
   });
 
-  // Drag & Drop
+  // Drag & Drop (레인 간 이동 + 같은 레인 내 순서 변경)
   let dragId = null;
+  let dragPlaceholder = null;
 
   kb.querySelectorAll('.card[data-id]').forEach(el => {
     el.addEventListener('dragstart', (e) => {
@@ -277,23 +278,50 @@ function render() {
       el.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
     });
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (!dragId || el.dataset.id === dragId) return;
+      const rect = el.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      if (e.clientY < midY) {
+        el.parentNode.insertBefore(getDragging(), el);
+      } else {
+        el.parentNode.insertBefore(getDragging(), el.nextSibling);
+      }
+    });
     el.addEventListener('dragend', () => {
       el.classList.remove('dragging');
+      if (dragId) saveLaneOrder();
       dragId = null;
       kb.querySelectorAll('.lane-body').forEach(lb => lb.classList.remove('drag-over'));
     });
   });
 
+  function getDragging() {
+    return kb.querySelector(`.card[data-id="${dragId}"]`);
+  }
+
+  async function saveLaneOrder() {
+    const dragged = getDragging();
+    if (!dragged) return;
+    const lb = dragged.closest('.lane-body');
+    if (!lb) return;
+    const newStatus = lb.dataset.lane;
+    const cardEls = lb.querySelectorAll('.card[data-id]');
+    const updates = [];
+    cardEls.forEach((el, i) => {
+      updates.push(supabase.from('cards').update({ status: newStatus, sort_order: i }).eq('id', el.dataset.id));
+    });
+    await Promise.all(updates);
+    await fetchCards();
+  }
+
   kb.querySelectorAll('.lane-body').forEach(lb => {
     lb.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; lb.classList.add('drag-over'); });
-    lb.addEventListener('dragleave', () => { lb.classList.remove('drag-over'); });
+    lb.addEventListener('dragleave', (e) => { if (!lb.contains(e.relatedTarget)) lb.classList.remove('drag-over'); });
     lb.addEventListener('drop', (e) => {
       e.preventDefault();
       lb.classList.remove('drag-over');
-      if (dragId && lb.dataset.lane) {
-        updateCard(dragId, { status: lb.dataset.lane });
-        dragId = null;
-      }
     });
   });
 
