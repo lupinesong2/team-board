@@ -64,31 +64,31 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 12px; display: flex; alig
 
 /* Card */
 .card {
-  border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px;
-  margin-bottom: 6px; background: #fafaf8; cursor: grab; transition: box-shadow 0.15s, opacity 0.15s;
+  border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px;
+  margin-bottom: 8px; background: #fafaf8; cursor: grab; transition: box-shadow 0.15s, opacity 0.15s;
 }
 .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .card.dragging { opacity: 0.4; cursor: grabbing; }
 .card:last-child { margin-bottom: 0; }
-.card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .card-title { font-size: 14px; font-weight: 600; flex: 1; }
 .person-badge { font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 12px; white-space: nowrap; }
-.card-desc { font-size: 13px; color: var(--muted); white-space: pre-line; }
-.card-ref { font-size: 12px; color: #888; margin-top: 4px; padding: 4px 8px; background: #f5f4f1; border-radius: 4px; white-space: pre-line; word-break: break-all; }
-.card-ref::before { content: '📎 '; }
+.card-desc { font-size: 13px; color: var(--muted); white-space: pre-line; margin-bottom: 6px; }
+.card-ref { font-size: 12px; color: #888; margin-top: 6px; padding: 6px 10px; background: #f5f4f1; border-radius: 4px; white-space: pre-line; word-break: break-all; display: flex; align-items: flex-start; gap: 6px; }
+.card-ref .clip-icon { flex-shrink: 0; color: #999; }
+.card-ref .ref-content { flex: 1; }
 .card-ref a { color: var(--accent); text-decoration: none; word-break: break-all; }
 .card-ref a:hover { text-decoration: underline; }
-.card-ref .figma-link::before { content: '🎨 '; }
 .card-desc a { color: var(--accent); text-decoration: none; }
 .card-desc a:hover { text-decoration: underline; }
-.card-meta { display: flex; gap: 12px; font-size: 11px; color: #999; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+.card-meta { display: flex; gap: 12px; font-size: 11px; color: #999; margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
 .card-persons { display: flex; gap: 4px; flex-wrap: wrap; }
 .empty { text-align: center; padding: 16px; font-size: 13px; color: #ccc; }
 
 /* Form */
 .card-form {
-  border: 1px solid var(--accent); border-radius: 6px; padding: 14px;
-  margin-bottom: 6px; background: #fff; display: flex; flex-direction: column; gap: 8px;
+  border: 1px solid var(--accent); border-radius: 6px; padding: 16px 18px;
+  margin-bottom: 8px; background: #fff; display: flex; flex-direction: column; gap: 10px;
 }
 .card-form input, .card-form select, .card-form textarea {
   padding: 8px 10px; border-radius: 4px; border: 1px solid var(--border);
@@ -96,15 +96,20 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 12px; display: flex; alig
 }
 .card-form input:focus, .card-form textarea:focus { border-color: var(--accent); }
 .card-form textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
-.form-row { display: flex; gap: 6px; }
+.form-row { display: flex; gap: 8px; align-items: center; }
 .form-row input { flex: 1; }
-.btn { padding: 6px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+.btn { padding: 7px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:hover { background: #2449b8; }
 .btn-cancel { background: var(--card); color: #666; border: 1px solid var(--border); }
 .btn-delete { background: var(--card); color: var(--red); border: 1px solid var(--red); margin-left: auto; }
 .btn-delete:hover { background: #fff0f0; }
-select { padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 12px; font-family: inherit; }
+select {
+  padding: 7px 28px 7px 10px; border-radius: 4px; border: 1px solid var(--border);
+  font-size: 12px; font-family: inherit; font-weight: 600;
+  appearance: none; -webkit-appearance: none;
+  background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+}
 
 /* Month Nav */
 .month-nav {
@@ -355,7 +360,7 @@ function cardHTML(c) {
       ${personBadges(c.person)}
     </div>
     ${c.description ? `<div class="card-desc">${linkify(c.description)}</div>` : ''}
-    ${c.reference ? `<div class="card-ref">${linkify(c.reference)}</div>` : ''}
+    ${c.reference ? `<div class="card-ref"><span class="clip-icon">📎</span><span class="ref-content">${linkifyRef(c.reference)}</span></div>` : ''}
     <div class="card-meta">
       ${c.started ? `<span>시작 ${esc(c.started)}</span>` : ''}
       ${c.deadline ? `<span>마감 ${deadlineWithDay(c.deadline)}</span>` : ''}
@@ -371,7 +376,7 @@ function formHTML(title, desc, person, deadline, status, isNew, id, reference) {
       <input name="person" placeholder="담당자 (쉼표로 복수 입력)" value="${esc(person)}">
       <input name="deadline" placeholder="마감 MM.DD" value="${esc(deadline)}">
     </div>
-    <textarea name="reference" placeholder="📎 참고 (링크, 메모 등)">${esc(reference || '')}</textarea>
+    <textarea name="reference" placeholder="참고 (링크, 메모 등)">${esc(reference || '')}</textarea>
     <div class="form-row">
       ${!isNew ? `<select name="status"><option value="in_progress" ${status==='in_progress'?'selected':''}>진행중</option><option value="done" ${status==='done'?'selected':''}>완료</option><option value="backlog" ${status==='backlog'?'selected':''}>대기</option></select>` : ''}
       <button class="btn btn-primary">${isNew ? '추가' : '저장'}</button>
@@ -386,11 +391,44 @@ function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function linkify(text) {
   const escaped = esc(text);
   return escaped.replace(/(https?:\/\/[^\s<&]+)/g, (url) => {
-    const isFigma = url.includes('figma.com');
-    const label = isFigma ? 'Figma' : (url.length > 50 ? url.substring(0, 47) + '...' : url);
-    const cls = isFigma ? 'class="figma-link"' : '';
-    return `<a href="${url}" target="_blank" rel="noopener" ${cls}>${label}</a>`;
+    const label = extractLinkName(url);
+    return `<a href="${url}" target="_blank" rel="noopener">${label}</a>`;
   });
+}
+
+function linkifyRef(text) {
+  const escaped = esc(text);
+  return escaped.replace(/(https?:\/\/[^\s<&]+)/g, (url) => {
+    const label = extractLinkName(url);
+    return `<a href="${url}" target="_blank" rel="noopener">${label}</a>`;
+  });
+}
+
+function extractLinkName(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('figma.com')) {
+      const parts = u.pathname.split('/').filter(Boolean);
+      const name = parts[parts.length - 1];
+      return name ? decodeURIComponent(name.replace(/-/g, ' ')) : 'Figma';
+    }
+    if (u.hostname.includes('docs.google.com')) return 'Google Docs';
+    if (u.hostname.includes('notion.so') || u.hostname.includes('notion.site')) return 'Notion';
+    if (u.hostname.includes('jira')) return 'Jira';
+    if (u.hostname.includes('confluence')) return 'Confluence';
+    if (u.hostname.includes('github.com')) {
+      const parts = u.pathname.split('/').filter(Boolean);
+      return parts.length >= 2 ? parts.slice(0, 2).join('/') : 'GitHub';
+    }
+    // 일반 URL: 경로의 마지막 부분을 파일명으로
+    const pathParts = u.pathname.split('/').filter(Boolean);
+    if (pathParts.length > 0) {
+      const last = decodeURIComponent(pathParts[pathParts.length - 1]);
+      if (last.length > 40) return last.substring(0, 37) + '...';
+      return last || u.hostname;
+    }
+    return u.hostname;
+  } catch { return url.length > 40 ? url.substring(0, 37) + '...' : url; }
 }
 
 fetchCards();
